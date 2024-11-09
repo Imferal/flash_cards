@@ -1,0 +1,17 @@
+{
+  "id": "english_verbs_collection_id",
+  "name": "Английские неправильные глаголы",
+  "folderId": "languages_folder_id",
+  "createdByUser": 0,
+  "selected": 1,
+  "cards": [
+    {
+      "frontText": "be - was/were - been",
+      "backText": "быть"
+    },
+    {
+      "frontText": "become - became - become",
+      "backText": "становиться"
+    }
+  ]
+}

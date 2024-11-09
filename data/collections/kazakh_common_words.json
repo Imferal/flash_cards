@@ -1,0 +1,17 @@
+{
+  "id": "kazakh_words_collection_id",
+  "name": "100 популярных казахских слов",
+  "folderId": "languages_folder_id",
+  "createdByUser": 0,
+  "selected": 1,
+  "cards": [
+    {
+      "frontText": "сәлем",
+      "backText": "привет"
+    },
+    {
+      "frontText": "рахмет",
+      "backText": "спасибо"
+    }
+  ]
+}
