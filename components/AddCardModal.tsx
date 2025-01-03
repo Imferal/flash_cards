@@ -1,23 +1,22 @@
-// components/AddCardModal.tsx
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Modal } from 'react-native';
 
 interface AddCardModalProps {
   visible: boolean;
   onClose: () => void;
-  onAddCard: (word: string, translation: string) => void;
+  onAddCard: (frontText: string, backText: string) => void;
 }
 
 export default function AddCardModal({ visible, onClose, onAddCard }: AddCardModalProps) {
-  const [word, setWord] = useState('');
-  const [translation, setTranslation] = useState('');
+  const [frontText, setFrontText] = useState('');
+  const [backText, setBackText] = useState('');
 
   const handleAddCard = () => {
-    if (word && translation) {
-      onAddCard(word, translation);
+    if (frontText && backText) {
+      onAddCard(frontText, backText);
 
-      setWord('');
-      setTranslation('');
+      setFrontText('');
+      setBackText('');
 
       onClose();
     } else {
@@ -35,16 +34,16 @@ export default function AddCardModal({ visible, onClose, onAddCard }: AddCardMod
           <TextInput
             style={styles.input}
             placeholder="Word"
-            value={word}
-            onChangeText={setWord}
+            value={frontText}
+            onChangeText={setFrontText}
           />
 
           {/* Поле для перевода */}
           <TextInput
             style={styles.input}
             placeholder="Translation"
-            value={translation}
-            onChangeText={setTranslation}
+            value={backText}
+            onChangeText={setBackText}
           />
 
           {/* Кнопка добавления карточки */}

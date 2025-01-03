@@ -1,9 +1,13 @@
-import React, { useState, useEffect } from 'react';
+// app/(tabs)/study.tsx
+
+import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Card from '@/components/Card';
-import { getSelectedCollections, getCardsByCollection } from '@/data/database';
+import { getCardsByCollection } from '@/data/database';
+import { CollectionsContext } from '@/contexts/CollectionsContext';
 
 export default function StudyScreen() {
+  const { collections } = useContext(CollectionsContext);
   const [cards, setCards] = useState([]);
   const [currentCardIndex, setCurrentCardIndex] = useState<number | null>(0);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -11,17 +15,22 @@ export default function StudyScreen() {
 
   useEffect(() => {
     const loadCards = async () => {
-      const selectedCollections = await getSelectedCollections();
-      let allCards = [];
+      // Получаем выбранные коллекции
+      const selectedCollections = collections.filter((col) => col.selected === 1);
+
+      let allCards: any[] = [];
       for (const collection of selectedCollections) {
         const collectionCards = await getCardsByCollection(collection.id);
         allCards = allCards.concat(collectionCards);
       }
+
       setCards(allCards);
       setCurrentCardIndex(allCards.length > 0 ? 0 : null);
+      setIsFlipped(false);
+      setIsAnimating(false);
     };
     loadCards().catch(console.error);
-  }, []);
+  }, [collections]);
 
   // Функция для переворота карточки
   const handleCardPress = () => {
@@ -56,8 +65,8 @@ export default function StudyScreen() {
       <View style={styles.cardContainer}>
         {currentCardIndex !== null && cards.length > 0 && (
           <Card
-            word={cards[currentCardIndex].word}
-            translation={cards[currentCardIndex].translation}
+            frontText={cards[currentCardIndex].frontText}
+            backText={cards[currentCardIndex].backText}
             isFlipped={isFlipped}
             onPress={handleCardPress}
             isAnimating={isAnimating}

@@ -3,8 +3,8 @@ import { StyleSheet, Text, TouchableWithoutFeedback, ViewStyle } from 'react-nat
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 interface CardProps {
-  word: string;
-  translation: string;
+  frontText: string;
+  backText: string;
   isFlipped: boolean;
   onPress: () => void;
   isAnimating: boolean;
@@ -13,8 +13,8 @@ interface CardProps {
 
 export default function Card(
   {
-    word,
-    translation,
+    frontText,
+    backText,
     isFlipped,
     onPress,
     isAnimating,
@@ -72,10 +72,10 @@ export default function Card(
     <TouchableWithoutFeedback onPress={onPress}>
       <Animated.View style={styles.container}>
         <Animated.View style={[styles.card, styles.cardFront, frontAnimatedStyle]}>
-          <Text style={styles.cardText}>{word}</Text>
+          <Text style={styles.cardText}>{frontText}</Text>
         </Animated.View>
         <Animated.View style={[styles.card, styles.cardBack, backAnimatedStyle]}>
-          <Text style={styles.cardText}>{translation}</Text>
+          <Text style={styles.cardText}>{backText}</Text>
         </Animated.View>
       </Animated.View>
     </TouchableWithoutFeedback>
