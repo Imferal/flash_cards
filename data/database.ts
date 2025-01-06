@@ -19,13 +19,6 @@ export const initDatabase = async () => {
   try {
     db = await openDatabaseAsync('flashcards.db');
 
-    // Удаляем существующие таблицы
-    await db.execAsync(`
-      DROP TABLE IF EXISTS cards;
-      DROP TABLE IF EXISTS collections;
-      DROP TABLE IF EXISTS folders;
-    `);
-
     await db.execAsync(`
       CREATE TABLE IF NOT EXISTS folders (
         id TEXT PRIMARY KEY NOT NULL,
@@ -62,10 +55,7 @@ export const initDatabase = async () => {
 
 const loadInitialData = async () => {
   const isDataLoaded = await AsyncStorage.getItem('dataLoaded');
-  // Закомментировать, если надо перечитать заново состояние "постоянных" коллекций
-  // if (isDataLoaded) {
-  //   return;
-  // }
+  if (isDataLoaded) return;
 
   for (const folder of foldersDataTyped) {
     await addFolderWithId(folder.id, folder.name, folder.parentFolderId, folder.createdByUser);
@@ -126,7 +116,6 @@ export const addCard = async (frontText: string, backText: string, collectionId:
       'INSERT INTO cards (id, frontText, backText, collectionId, createdByUser) VALUES (?, ?, ?, ?, ?);',
       id, frontText, backText, collectionId, createdByUser
     );
-    console.log('Card added');
   } catch (error) {
     console.error('Error adding card:', error);
   }
@@ -205,7 +194,7 @@ export const getFoldersByParentId = async (parentFolderId: string | null): Promi
 /** Находит папку по её ID */
 export const getFolderById = async (id: string): Promise<Folder | null> => {
   try {
-    const rows = await db.getAllAsync('SELECT * FROM folders WHERE id = ?;', id);
+    const rows = await db.getAllAsync('SELECT * FROM folders WHERE id = ?;', id) as Folder[];
     return rows.length > 0 ? rows[0] : null;
   } catch (error) {
     console.error('Ошибка при получении папки по ID:', error);
@@ -277,5 +266,17 @@ export const getCollectionsByFolderId = async (folderId: string | null): Promise
   } catch (error) {
     console.error('Ошибка при получении коллекций по папке:', error);
     return [];
+  }
+};
+
+// Удаляет существующие таблицы
+export const resetAppState = async () => {
+  try {
+    console.log('Начинается сброс состояния приложения...');
+    await AsyncStorage.removeItem('dataLoaded'); // Удаляем флаг загрузки данных
+    await initDatabase(); // Переинициализация базы данных
+    console.log('Состояние приложения успешно сброшено.');
+  } catch (error) {
+    console.error('Ошибка при сбросе состояния приложения: ', error);
   }
 };
