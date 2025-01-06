@@ -13,43 +13,53 @@ interface Collection {
   name: string;
   folderId: string | null;
   createdByUser: number;
-  selected: number;
+  selected: boolean;
 }
 
 interface CollectionsContextType {
   collections: Collection[];
   toggleCollection: (id: string) => void;
+  reloadCollections: () => Promise<void>;
 }
 
 export const CollectionsContext = createContext<CollectionsContextType>({
   collections: [],
   toggleCollection: () => {},
+  reloadCollections: async () => {},
 });
 
 export const CollectionsProvider = ({ children }) => {
   const [collections, setCollections] = useState<Collection[]>([]);
   const [isDBReady, setIsDBReady] = useState(false);
 
+  // Инициализация базы и загрузка "collections" один раз при старте
   useEffect(() => {
     const loadData = async () => {
       await initDatabase();
       setIsDBReady(true);
 
+      // Начальная загрузка
       const data = await getCollections();
       setCollections(data);
     };
     loadData().catch(console.error);
   }, []);
 
+  // Метод для переключения selected
   const toggleCollection = async (id: string) => {
     const collection = collections.find((col) => col.id === id);
     if (collection) {
-      const newSelected = collection.selected ? 0 : 1;
-      await toggleCollectionSelection(id, newSelected);
-      // Обновляем состояние после изменения
+      await toggleCollectionSelection(id, collection.selected);
+      // После переключения — перезагружаем весь список
       const updatedCollections = await getCollections();
       setCollections(updatedCollections);
     }
+  };
+
+  // Принудительно перезагружает весь список "collections"
+  const reloadCollections = async () => {
+    const updated = await getCollections();
+    setCollections(updated);
   };
 
   if (!isDBReady) {
@@ -58,7 +68,13 @@ export const CollectionsProvider = ({ children }) => {
   }
 
   return (
-    <CollectionsContext.Provider value={{ collections, toggleCollection }}>
+    <CollectionsContext.Provider
+      value={{
+        collections,
+        toggleCollection,
+        reloadCollections,
+      }}
+    >
       {children}
     </CollectionsContext.Provider>
   );

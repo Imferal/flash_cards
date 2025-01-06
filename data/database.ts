@@ -126,7 +126,7 @@ export const addCard = async (frontText: string, backText: string, collectionId:
       'INSERT INTO cards (id, frontText, backText, collectionId, createdByUser) VALUES (?, ?, ?, ?, ?);',
       id, frontText, backText, collectionId, createdByUser
     );
-    // console.log('Card added');
+    console.log('Card added');
   } catch (error) {
     console.error('Error adding card:', error);
   }
@@ -141,11 +141,29 @@ export const getCollections = async () => {
   }
 };
 
+export const getFolders = async (): Promise<Folder[]> => {
+  try {
+    return await db.getAllAsync('SELECT * FROM folders;');
+  } catch (error) {
+    console.error('Error getting folders:', error);
+    return [];
+  }
+}
+
+export const moveCollection = async (collectionId: string, newFolderId: string | null) => {
+  try {
+    await db.runAsync('UPDATE collections SET folderId = ? WHERE id = ?;', newFolderId, collectionId);
+    console.log('Collection moved');
+  } catch (error) {
+    console.error('Error moving collections:', error)
+  }
+}
+
 export const toggleCollectionSelection = async (collectionId: string, selected: boolean) => {
   try {
     await db.runAsync(
       'UPDATE collections SET selected = ? WHERE id = ?;',
-      selected ? 1 : 0, collectionId
+      selected ? 0 : 1, collectionId
     );
     console.log('Collection selection status updated');
   } catch (error) {
