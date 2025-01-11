@@ -59,7 +59,7 @@ export default function StudyScreen() {
   return (
     <View style={styles.container}>
       {/* Заголовок */}
-      <Text style={styles.header}>Cards</Text>
+      {/*<Text style={styles.header}>Cards</Text>*/}
 
       {/* Карточка */}
       <View style={styles.cardContainer}>

@@ -1,42 +1,43 @@
-// components/MoveCollectionModal.tsx
+// components/MoveFolderModal.tsx
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { getAllDescendants, getFolders } from '@/data/database';
 import { Folder } from '@/data/types';
-import { getFolders } from '@/data/database';
-import { Button, FlatList, Modal, TouchableOpacity, View, StyleSheet, Text } from 'react-native';
+import { Button, FlatList, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-interface MoveCollectionModalProps {
+interface MoveFolderModalProps {
   visible: boolean;
-  collectionId: string | null;
+  folderId: string | null;
   onClose: () => void;
-  onConfirm: (folderId: string | null) => void;
+  onConfirm: (targetFolderId: string | null) => void;
 }
 
-export default function MoveCollectionModal(
+/**
+ * Позволяет выбрать целевую папку для переноса folderId,
+ * исключая сам folderId и всех её потомков.
+ */
+export default function MoveFolderModal(
   {
     visible,
+    folderId,
     onClose,
     onConfirm,
-  }: MoveCollectionModalProps) {
+  }: MoveFolderModalProps) {
   const [folders, setFolders] = useState<Folder[]>([]);
 
   useEffect(() => {
-    const loadFolders = async (): Promise<Folder[]> => {
-      try {
-        const allFolders = await getFolders();
-        setFolders(allFolders);
-      } catch (error) {
-        console.error(error);
-      }
-    };
+    if (!visible || !folderId) return;
+    (async () => {
+      const all = await getFolders();
+      const descendants = await getAllDescendants(folderId);
+      descendants.push(folderId);
+      const filtered = all.filter(f => !descendants.includes(f.id));
+      setFolders(filtered);
+    })();
+  }, [visible, folderId]);
 
-    if (visible) {
-      loadFolders();
-    }
-  }, [visible]);
-
-  const handleSelectFolder = (folderId: string | null) => {
-    onConfirm(folderId);
+  const handleSelectFolder = async (id: string | null) => {
+    onConfirm(id);
     onClose();
   };
 
@@ -46,6 +47,7 @@ export default function MoveCollectionModal(
         <View style={styles.modalContent}>
           <Text style={styles.title}>Выберите папку для переноса</Text>
 
+          {/* Кнопка выбора корневой папки */}
           <TouchableOpacity style={styles.folderItem} onPress={() => handleSelectFolder(null)}>
             <Text style={styles.folderItemText}>[Корневая папка]</Text>
           </TouchableOpacity>

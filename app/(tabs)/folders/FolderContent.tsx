@@ -1,29 +1,60 @@
 // app/(tabs)/folders/FolderContent.tsx
 
 import React, { useContext, useEffect, useState } from 'react';
-import { Button, FlatList, Modal, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { CollectionsContext } from '@/contexts/CollectionsContext';
-import { addFolder, getCollections, getFolderById, getFoldersByParentId, moveCollection } from '@/data/database';
+import {
+  addCollection,
+  addFolder,
+  deleteCollection,
+  deleteFolder,
+  getFolderById,
+  getFoldersByParentId,
+  moveCollection, moveFolder,
+  renameCollection,
+  renameFolder,
+} from '@/data/database';
 import { Collection, Folder } from '@/data/types';
-import { Ionicons } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 import MoveCollectionModal from '@/components/MoveCollectionModal';
+import FolderModal from '@/components/FolderModal';
+import CollectionModal from '@/components/CollectionModal';
+import FolderItem from '@/components/FolderItem';
+import CollectionItem from '@/components/CollectionItem';
+import MoveFolderModal from '@/components/MoveFolderModal';
+import { FAB, Surface, useTheme } from 'react-native-paper';
 
 interface Props {
   folderId: string | null;
 }
 
 export default function FolderContent({ folderId }: Props) {
+  const theme = useTheme();
   const router = useRouter();
 
   // Состояния для папок, хлебных крошек и модалки "Добавить папку"
   const [folders, setFolders] = useState<Folder[]>([]);
   const [breadcrumbs, setBreadcrumbs] = useState<Folder[]>([]);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [newFolderName, setNewFolderName] = useState('');
+  const [addFolderModalVisible, setAddFolderModalVisible] = useState(false);
+  const [addCollectionModalVisible, setAddCollectionModalVisible] = useState(false);
+
+  // Локальные стейты для “Переименовать папку”
+  const [renameFolderModalVisible, setRenameFolderModalVisible] = useState(false);
+  const [folderToRenameId, setFolderToRenameId] = useState<string | null>(null);
+  const [folderToRenameName, setFolderToRenameName] = useState('');
+
+  // Локальные стейты для “Переименовать коллекцию”
+  const [renameCollectionModalVisible, setRenameCollectionModalVisible] = useState(false);
+  const [collectionToRenameId, setCollectionToRenameId] = useState<string | null>(null);
+  const [collectionToRenameName, setCollectionToRenameName] = useState('');
+
+  // Состояния для переноса папки
+  const [moveFolderModalVisible, setMoveFolderModalVisible] = useState(false);
+  const [folderToMove, setFolderToMove] = useState<string | null>(null);
 
   // Состояния для переноса коллекции
-  const [moveModalVisible, setMoveModalVisible] = useState(false);
+  const [moveCollectionModalVisible, setMoveCollectionModalVisible] = useState(false);
   const [collectionToMove, setCollectionToMove] = useState<string | null>(null);
 
   // Подтягиваем коллекции из контекста
@@ -33,10 +64,6 @@ export default function FolderContent({ folderId }: Props) {
   const folderCollections = collections.filter((col) => col.folderId === folderId);
 
   useEffect(() => {
-    const loadFolders = async () => {
-      const loadedFolders = await getFoldersByParentId(folderId);
-      setFolders(loadedFolders);
-    };
     loadFolders().catch(console.error);
 
     // Загружаем хлебные крошки
@@ -56,25 +83,49 @@ export default function FolderContent({ folderId }: Props) {
     loadBreadcrumbs().catch(console.error);
   }, [folderId]);
 
-  const handleAddFolder = async () => {
-    if (newFolderName.trim() !== '') {
-      const newFolderId = await addFolder(newFolderName, folderId, 1);
-      if (newFolderId) {
-        setFolders((prev) => [
-          ...prev,
-          {
-            id: newFolderId,
-            name: newFolderName,
-            parentFolderId: folderId,
-            createdByUser: 1,
-          },
-        ]);
-        setNewFolderName('');
-        setModalVisible(false);
-      }
-    } else {
-      alert('Пожалуйста, введите название папки');
+  const loadFolders = async () => {
+    const loadedFolders = await getFoldersByParentId(folderId);
+    setFolders(loadedFolders);
+  };
+
+  // Добавляет новую папку
+  const handleAddFolder = async (folderName: string) => {
+    const newFolderId = await addFolder(folderName, folderId, 1);
+    if (newFolderId) {
+      await loadFolders();
     }
+  };
+
+  // Добавляет новую коллекцию
+  const handleAddCollection = async (collectionName: string) => {
+    const newCollectionId = await addCollection(collectionName, folderId, 1, 1);
+    if (newCollectionId) {
+      await reloadCollections(); // обновляем списки
+    }
+  };
+
+  // Переименовывает папку
+  const handleRenameFolder = async (folderId: string, folderName: string) => {
+    await renameFolder(folderId, folderName);
+    await loadFolders();
+  };
+
+  // Переименовывает коллекцию
+  const handleRenameCollection = async (collectionId: string, collectionName: string) => {
+    await renameCollection(collectionId, collectionName);
+    await reloadCollections();
+  };
+
+  // Удаляет папку
+  const handleDeleteFolder = async (folderId: string) => {
+    await deleteFolder(folderId);
+    await loadFolders();
+  };
+
+  // Удаляет коллекцию
+  const handleDeleteCollection = async (collectionId: string) => {
+    await deleteCollection(collectionId);
+    await reloadCollections();
   };
 
   // Переход в папку
@@ -84,7 +135,6 @@ export default function FolderContent({ folderId }: Props) {
 
   // Переключение коллекции
   const handleToggleCollection = (collectionId: string) => {
-    // Вызываем toggleCollection из контекста
     toggleCollection(collectionId);
   };
 
@@ -93,15 +143,54 @@ export default function FolderContent({ folderId }: Props) {
     router.push(`/folders/${id ?? ''}`);
   };
 
-  // Перенести: нажатие
-  const handleMovePress = (collectionId: string) => {
-    console.log(`Открытие модального окна для переноса коллекции: ${collectionId}`);
-    setMoveModalVisible(true);
+  // Перенести папку: нажатие
+  const onMoveFolderPress = (folderId: string) => {
+    setMoveFolderModalVisible(true);
+    setFolderToMove(folderId);
+  };
+
+  // Перенести коллекцию: нажатие
+  const onMoveCollectionPress = (collectionId: string) => {
+    setMoveCollectionModalVisible(true);
     setCollectionToMove(collectionId);
   };
 
+  const onEditCollectionPress = (collectionId: string) => {
+    console.log('Нажата кнопка редактирования коллекции с Id: ', collectionId)
+  }
+
+  const onRenameFolderPress = (folder: Folder) => {
+    // сохраняем ID и старое имя
+    setFolderToRenameId(folder.id);
+    setFolderToRenameName(folder.name);
+    // показываем модалку
+    setRenameFolderModalVisible(true);
+  };
+
+  const onRenameCollectionPress = (collection: Collection) => {
+    // сохраняем ID и старое имя
+    setCollectionToRenameId(collection.id);
+    setCollectionToRenameName(collection.name);
+    // показываем модалку
+    setRenameCollectionModalVisible(true);
+  };
+
+  // Папка успешно перенесена
+  const handleConfirmFolderMove = async (targetFolderId: string | null) => {
+    console.log(`Подтверждён перенос папки ${folderToMove} в папку ${targetFolderId}`);
+    if (!folderToMove) return;
+
+    await moveFolder(folderToMove, targetFolderId);
+
+    // После переноса — перезагружаем коллекции из базы, чтобы обновить состояние интерфейса
+    await loadFolders();
+
+    setMoveFolderModalVisible(false);
+    setFolderToMove(null);
+  };
+
   // Коллекция успешно перенесена
-  const handleConfirmMove = async (targetFolderId: string | null) => {
+  const handleConfirmCollectionMove = async (targetFolderId: string | null) => {
     console.log(`Подтверждён перенос коллекции ${collectionToMove} в папку ${targetFolderId}`);
     if (!collectionToMove) return;
 
@@ -110,128 +199,163 @@ export default function FolderContent({ folderId }: Props) {
     // После переноса — перезагружаем коллекции из базы, чтобы обновить состояние интерфейса
     await reloadCollections();
 
-    setMoveModalVisible(false);
+    setMoveCollectionModalVisible(false);
     setCollectionToMove(null);
   };
 
   return (
-    <View style={styles.container}>
+    <Surface style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* Хлебные крошки */}
-      <View style={styles.breadcrumbContainer}>
+      <Surface style={styles.breadcrumbContainer} elevation={0}>
         <TouchableOpacity onPress={() => handleBreadcrumbPress(null)}>
-          <Ionicons name="home-outline" size={20} color="#000000de" style={styles.icon}/>
+          <MaterialIcons name="home" size={28} color={theme.colors.onSurface} style={styles.icon}/>
         </TouchableOpacity>
+
         {breadcrumbs.map((folder, index) => (
-          <View key={folder.id} style={styles.breadcrumbWrapper}>
-            <Text style={styles.breadcrumbSeparator}> / </Text>
+          <Surface key={folder.id} style={styles.breadcrumbWrapper} elevation={0}>
+            <Text style={[styles.breadcrumbSeparator, { color: theme.colors.onSurface }]}>
+              {' / '}
+            </Text>
             {index === breadcrumbs.length - 1 ? (
-              <Text style={styles.breadcrumbCurrent}>{folder.name}</Text>
+              <Text style={[styles.breadcrumbCurrent, { color: theme.colors.text }]}>{folder.name}</Text>
             ) : (
-              <Link href={`/folders/${folder.id}`} style={styles.breadcrumbItem}>
+              <Link href={`/folders/${folder.id}`} style={[styles.breadcrumbItem, { color: theme.colors.text }]}>
                 {folder.name}
               </Link>
             )}
-          </View>
+          </Surface>
         ))}
-      </View>
+      </Surface>
 
       <FlatList
         data={[...folders, ...folderCollections]}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => {
+          // Папка
           if ('parentFolderId' in item) {
-            // Это папка
             const folderItem = item as Folder;
             return (
-              <TouchableOpacity onPress={() => handleFolderPress(folderItem.id)}>
-                <Text style={styles.folderItem}>📁 {folderItem.name}</Text>
-              </TouchableOpacity>
+              <FolderItem
+                folder={folderItem}
+                onPress={handleFolderPress}
+                onRename={onRenameFolderPress}
+                onDelete={handleDeleteFolder}
+                onMove={onMoveFolderPress}
+              />
             );
           } else {
-            // Это коллекция
+            // Коллекция
             const coll = item as Collection;
             return (
-              <View style={styles.collectionRow}>
-                <View style={styles.collectionHeader}>
-                  <Text style={styles.collectionItem}>📄 {coll.name}</Text>
-                  <Switch
-                    value={coll.selected === 1}
-                    onValueChange={() => handleToggleCollection(coll.id)}
-                  />
-                </View>
-
-                {/* Кнопка "Перенести" под названием коллекции */}
-                <TouchableOpacity style={styles.moveButtonContainer} onPress={() => handleMovePress(coll.id)}>
-                  <Text style={styles.moveButtonText}>Перенести</Text>
-                </TouchableOpacity>
-              </View>
+              <CollectionItem
+                collection={coll}
+                onToggleSelect={handleToggleCollection}
+                onRename={onRenameCollectionPress}
+                onDelete={handleDeleteCollection}
+                onMove={onMoveCollectionPress}
+                onEdit={onEditCollectionPress}
+              />
             );
           }
         }}
       />
 
-      {/* Кнопка добавления папки */}
-      <TouchableOpacity style={styles.addButton} onPress={() => setModalVisible(true)}>
-        <Text style={styles.addButtonText}>Добавить папку</Text>
-      </TouchableOpacity>
+      {/* Добавить папку */}
+      <FAB
+        style={[styles.fab, styles.fabFolder, { backgroundColor: theme.colors.accent }]}
+        icon={(props) => (
+          <MaterialIcons name="create-new-folder" size={props.size} color={theme.colors.background} />
+        )}
+        onPress={() => setAddFolderModalVisible(true)}
+      />
 
-      <Modal transparent={true} visible={modalVisible} animationType="slide">
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Новая папка</Text>
-            <TextInput
-              style={styles.input}
-              maxLength={80}
-              placeholder="Название папки"
-              value={newFolderName}
-              onChangeText={setNewFolderName}
-            />
-            <Text style={styles.charCounter}>
-              {newFolderName.length}/80
-            </Text>
-            <View style={styles.buttonWrapper}>
-              <View style={styles.buttonSpacing}>
-                <Button title="Добавить" onPress={handleAddFolder}/>
-              </View>
-              <View style={styles.buttonSpacing}>
-                <Button title="Отмена" onPress={() => setModalVisible(false)}/>
-              </View>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      {/* Добавить коллекцию */}
+      <FAB
+        style={[styles.fab, { backgroundColor: theme.colors.accent }]}
+        icon={(props) => (
+          <MaterialIcons name="library-add" size={props.size} color={theme.colors.background} />
+        )}
+        onPress={() => setAddCollectionModalVisible(true)}
+      />
+
+      {/* Модалка добавления папки */}
+      <FolderModal
+        visible={addFolderModalVisible}
+        onClose={() => setAddFolderModalVisible(false)}
+        onSubmit={handleAddFolder}
+      />
+
+      {/* Модалка добавления коллекции */}
+      <CollectionModal
+        visible={addCollectionModalVisible}
+        onClose={() => setAddCollectionModalVisible(false)}
+        onSubmit={handleAddCollection}
+      />
+
+      {/* Модалка переименования папки */}
+      <FolderModal
+        visible={renameFolderModalVisible}
+        onClose={() => setRenameFolderModalVisible(false)}
+        onSubmit={(newName) => {
+          if (!folderToRenameId) return;
+          handleRenameFolder(folderToRenameId, newName);
+          setRenameFolderModalVisible(false);
+        }}
+        initialName={folderToRenameName}
+        submitButtonLabel="Переименовать"
+        title="Переименовать папку"
+      />
+
+      {/* Модалка переименования коллекции */}
+      <CollectionModal
+        visible={renameCollectionModalVisible}
+        onClose={() => setRenameCollectionModalVisible(false)}
+        onSubmit={(newName) => {
+          if (!collectionToRenameId) return;
+          handleRenameCollection(collectionToRenameId, newName);
+          setRenameCollectionModalVisible(false);
+        }}
+        initialName={collectionToRenameName}
+        submitButtonLabel="Переименовать"
+        title="Переименовать коллекцию"
+      />
+
+      <MoveFolderModal
+        visible={moveFolderModalVisible}
+        folderId={folderToMove}
+        onClose={() => setMoveFolderModalVisible(false)}
+        onConfirm={handleConfirmFolderMove}
+      />
 
       <MoveCollectionModal
-        visible={moveModalVisible}
+        visible={moveCollectionModalVisible}
         collectionId={collectionToMove}
-        onClose={() => setMoveModalVisible(false)}
-        onConfirm={handleConfirmMove}
+        onClose={() => setMoveCollectionModalVisible(false)}
+        onConfirm={handleConfirmCollectionMove}
       />
-    </View>
+    </Surface>
   );
 }
 
 const styles = StyleSheet.create({
   addButton: {
-    backgroundColor: 'blue',
     padding: 12,
     borderRadius: 8,
     alignItems: 'center',
     marginTop: 16,
   },
   addButtonText: {
-    color: 'white',
     fontSize: 16,
   },
   charCounter: {
     textAlign: 'right',
     marginBottom: 32,
     fontSize: 12,
-    color: 'gray',
   },
   container: {
     flex: 1,
     padding: 16,
+    height: '100%',
   },
   buttonWrapper: {
     flexDirection: 'row',
@@ -254,17 +378,14 @@ const styles = StyleSheet.create({
   breadcrumbItem: {
     fontSize: 16,
     fontWeight: '300',
-    color: '#00000099',
     paddingHorizontal: 4,
   },
   breadcrumbSeparator: {
     fontSize: 16,
-    color: '#00000099',
   },
   breadcrumbCurrent: {
     fontSize: 16,
     fontWeight: '400',
-    color: '#000000de',
     paddingHorizontal: 4,
   },
   icon: {
@@ -272,10 +393,28 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: 'gray',
     borderRadius: 8,
     padding: 8,
     marginBottom: 8,
+  },
+  fab: {
+    position: 'absolute',
+    left: 16,
+    bottom: 16,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'tomato',
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 4, // тень на Android
+    shadowColor: '#000', // тень на iOS
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    shadowOffset: { width: 2, height: 2 },
+  },
+  fabFolder: {
+    bottom: 80,
   },
   folderItem: {
     fontSize: 18,
@@ -285,7 +424,6 @@ const styles = StyleSheet.create({
     marginVertical: 12,
     paddingVertical: 8,
     paddingHorizontal: 12,
-    backgroundColor: '#f9f9f9',
     borderRadius: 8,
     elevation: 1, // Тень для Android
     shadowColor: '#000', // Тень для iOS
@@ -303,7 +441,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   moveButtonContainer: {
-    backgroundColor: '#e0f7fa',
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 8,
@@ -311,7 +448,6 @@ const styles = StyleSheet.create({
     marginTop: 8, // Отступ сверху для кнопки
   },
   moveButtonText: {
-    color: 'blue',
     fontSize: 16,
     fontWeight: '500',
   },
@@ -323,7 +459,6 @@ const styles = StyleSheet.create({
   modalContent: {
     margin: 16,
     padding: 16,
-    backgroundColor: 'white',
     borderRadius: 8,
   },
   modalTitle: {
@@ -331,4 +466,3 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
 });
-

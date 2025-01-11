@@ -139,6 +139,15 @@ export const getFolders = async (): Promise<Folder[]> => {
   }
 }
 
+export const moveFolder = async (folderId: string, newFolderId: string | null) => {
+  try {
+    await db.runAsync('UPDATE folders SET parentFolderId = ? WHERE id = ?;', newFolderId, folderId);
+    console.log('Folder moved');
+  } catch (error) {
+    console.error('Error moving folder:', error)
+  }
+}
+
 export const moveCollection = async (collectionId: string, newFolderId: string | null) => {
   try {
     await db.runAsync('UPDATE collections SET folderId = ? WHERE id = ?;', newFolderId, collectionId);
@@ -168,6 +177,19 @@ export const getSelectedCollections = async () => {
     return [];
   }
 };
+
+/** Рекурсивно находит все потомки (child, grandchild...) */
+export async function getAllDescendants(folderId: string): Promise<string[]> {
+  const subFolders = await getFoldersByParentId(folderId);
+  let ids: string[] = subFolders.map(sf => sf.id);
+
+  for (const sf of subFolders) {
+    const deeper = await getAllDescendants(sf.id);
+    ids.push(...deeper);
+  }
+
+  return ids;
+}
 
 export const getCardsByCollection = async (collectionId: string) => {
   try {
@@ -223,6 +245,32 @@ export const addFolder = async (name: string, parentFolderId: string | null = nu
   }
 };
 
+/** Функция для добавления новой коллекции */
+export const addCollection = async (
+  name: string,
+  folderId: string | null = null,
+  createdByUser: number = 1,
+  selected: number = 0): Promise<string | null> => {
+
+  const id = uuid.v4() as string;
+
+  try {
+    await db.runAsync(
+      'INSERT INTO collections (id, name, folderId, createdByUser, selected) VALUES (?, ?, ?, ?, ?);',
+      id,
+      name,
+      folderId,
+      createdByUser,
+      selected
+    );
+    console.log('Коллекция добавлена, id: ', id);
+    return id;
+  } catch (error) {
+    console.error('Ошибка при добавлении коллекции:', error);
+    return null;
+  }
+};
+
 /** Функция для переименования папки */
 export const renameFolder = async (id: string, newName: string): Promise<void> => {
   try {
@@ -234,6 +282,20 @@ export const renameFolder = async (id: string, newName: string): Promise<void> =
     console.log('Папка переименована');
   } catch (error) {
     console.error('Ошибка при переименовании папки:', error);
+  }
+};
+
+/** Функция для переименования коллекции */
+export const renameCollection = async (id: string, newName: string): Promise<void> => {
+  try {
+    await db.runAsync(
+      'UPDATE collections SET name = ? WHERE id = ?;',
+      newName,
+      id
+    );
+    console.log('Коллекция переименована');
+  } catch (error) {
+    console.error('Ошибка при переименовании коллекции:', error);
   }
 };
 
@@ -253,6 +315,18 @@ export const deleteFolder = async (id: string): Promise<void> => {
     console.log('Папка удалена');
   } catch (error) {
     console.error('Ошибка при удалении папки:', error);
+  }
+};
+
+/** Функция для удаления папки */
+export const deleteCollection = async (id: string): Promise<void> => {
+  try {
+    // Удаляем все вложенные папки и коллекции рекурсивно
+    await db.runAsync('DELETE FROM collections WHERE id = ?;', id);
+
+    console.log('Коллекция удалена');
+  } catch (error) {
+    console.error('Ошибка при удалении коллекции:', error);
   }
 };
 
