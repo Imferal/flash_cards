@@ -1,12 +1,9 @@
 // contexts/CollectionsContext.tsx
 
-import React, { createContext, useState, useEffect } from 'react';
-import {
-  getCollections,
-  toggleCollectionSelection,
-  initDatabase,
-} from '@/data/database';
+import React, { createContext, useEffect, useState } from 'react';
+import { initDatabase } from '@/data/database';
 import { Text } from 'react-native';
+import { getCollections, toggleCollectionSelection } from '@/data/collections.db.ts';
 
 interface Collection {
   id: string;
@@ -24,8 +21,10 @@ interface CollectionsContextType {
 
 export const CollectionsContext = createContext<CollectionsContextType>({
   collections: [],
-  toggleCollection: () => {},
-  reloadCollections: async () => {},
+  toggleCollection: () => {
+  },
+  reloadCollections: async () => {
+  },
 });
 
 export const CollectionsProvider = ({ children }) => {

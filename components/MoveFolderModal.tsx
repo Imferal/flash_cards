@@ -1,9 +1,9 @@
 // components/MoveFolderModal.tsx
 
 import React, { useEffect, useState } from 'react';
-import { getAllDescendants, getFolders } from '@/data/database';
-import { Folder } from '@/data/types';
+import { Folder } from '@/data/types.ts';
 import { Button, FlatList, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { getAllDescendants, getFolders } from '@/data/folders.db.ts';
 
 interface MoveFolderModalProps {
   visible: boolean;

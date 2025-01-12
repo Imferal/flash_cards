@@ -1,12 +1,14 @@
 // app/(tabs)/study.tsx
 
 import React, { useState, useEffect, useContext } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import Card from '@/components/Card';
-import { getCardsByCollection } from '@/data/database';
 import { CollectionsContext } from '@/contexts/CollectionsContext';
+import { getCardsByCollection } from '@/data/cards.db.ts';
+import { useTheme } from 'react-native-paper';
 
 export default function StudyScreen() {
+  const theme = useTheme();
   const { collections } = useContext(CollectionsContext);
   const [cards, setCards] = useState([]);
   const [currentCardIndex, setCurrentCardIndex] = useState<number | null>(0);
@@ -57,10 +59,7 @@ export default function StudyScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Заголовок */}
-      {/*<Text style={styles.header}>Cards</Text>*/}
-
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* Карточка */}
       <View style={styles.cardContainer}>
         {currentCardIndex !== null && cards.length > 0 && (
@@ -71,6 +70,11 @@ export default function StudyScreen() {
             onPress={handleCardPress}
             isAnimating={isAnimating}
             onAnimationEnd={handleAnimationEnd}
+            themeColors={{
+              frontBackground: theme.colors.primaryContainer,
+              backBackground: theme.colors.secondaryContainer,
+              textColor: theme.colors.onSurface,
+            }}
           />
         )}
       </View>

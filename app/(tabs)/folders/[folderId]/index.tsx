@@ -1,4 +1,4 @@
-// app/(tabs)/folders/[folderId]/index.tsx
+// app/(tabs)/folders/[folderId]/CardsScreen.tsx
 
 import React from 'react';
 import { useLocalSearchParams } from 'expo-router';

@@ -1,9 +1,9 @@
 // components/MoveCollectionModal.tsx
 
 import { useEffect, useState } from 'react';
-import { Folder } from '@/data/types';
-import { getFolders } from '@/data/database';
-import { Button, FlatList, Modal, TouchableOpacity, View, StyleSheet, Text } from 'react-native';
+import { Folder } from '@/data/types.ts';
+import { Button, FlatList, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { getFolders } from '@/data/folders.db.ts';
 
 interface MoveCollectionModalProps {
   visible: boolean;

@@ -62,26 +62,6 @@ export const cozySunsetTheme = {
   },
 };
 
-export const goldenWheatTheme = {
-  ...DefaultTheme,
-  colors: {
-    ...DefaultTheme.colors,
-    primary: '#F4A460',  // светлый песочный
-    accent: '#FFD700',   // золотистый
-    background: '#FFFACD',  // лимонный крем
-    surface: '#FAF0E6',  // светло-лёгкий беж
-    text: '#6B4226',  // древесно-коричневый
-    onSurface: '#8B5A2B',  // коричнево-золотистый
-    error: '#B22222',  // бордовый
-  },
-  roundness: 8,
-  sizes: {
-    iconSizeSmall: 20,
-    iconSizeMedium: 28,
-    iconSizeLarge: 36,
-  },
-};
-
 export const honeyCinnamonTheme = {
   ...DefaultTheme,
   colors: {

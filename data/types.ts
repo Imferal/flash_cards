@@ -8,6 +8,7 @@ export interface Folder {
 }
 
 export interface Card {
+  id: string;
   frontText: string;
   backText: string;
 }

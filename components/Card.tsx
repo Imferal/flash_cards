@@ -9,6 +9,11 @@ interface CardProps {
   onPress: () => void;
   isAnimating: boolean;
   onAnimationEnd: () => void;
+  themeColors: {
+    frontBackground: string;
+    backBackground: string;
+    textColor: string;
+  };
 }
 
 export default function Card(
@@ -19,6 +24,7 @@ export default function Card(
     onPress,
     isAnimating,
     onAnimationEnd,
+    themeColors,
   }: CardProps,
 ) {
   const rotateY = useSharedValue(0);
@@ -71,11 +77,27 @@ export default function Card(
   return (
     <TouchableWithoutFeedback onPress={onPress}>
       <Animated.View style={styles.container}>
-        <Animated.View style={[styles.card, styles.cardFront, frontAnimatedStyle]}>
-          <Text style={styles.cardText}>{frontText}</Text>
+        <Animated.View
+          style={[
+            styles.card,
+            { backgroundColor: themeColors.frontBackground },
+            frontAnimatedStyle,
+          ]}
+        >
+          <Text style={[styles.cardText, { color: themeColors.textColor }]}>
+            {frontText}
+          </Text>
         </Animated.View>
-        <Animated.View style={[styles.card, styles.cardBack, backAnimatedStyle]}>
-          <Text style={styles.cardText}>{backText}</Text>
+        <Animated.View
+          style={[
+            styles.card,
+            { backgroundColor: themeColors.backBackground },
+            backAnimatedStyle,
+          ]}
+        >
+          <Text style={[styles.cardText, { color: themeColors.textColor }]}>
+            {backText}
+          </Text>
         </Animated.View>
       </Animated.View>
     </TouchableWithoutFeedback>
@@ -98,14 +120,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     backfaceVisibility: 'hidden',
   },
-  cardFront: {
-    backgroundColor: 'lightblue',
-  },
-  cardBack: {
-    backgroundColor: 'lightcoral',
-  },
   cardText: {
     fontSize: 24,
     fontWeight: 'bold',
+    textAlign: 'center',
   },
 });

@@ -1,7 +1,6 @@
-// components/FolderModal.tsx
-
 import React, { useEffect, useState } from 'react';
-import { Button, Keyboard, Modal, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
+import { Keyboard, Modal, StyleSheet, TextInput, TouchableWithoutFeedback, View } from 'react-native';
+import { Button, Text, Surface, useTheme } from 'react-native-paper';
 
 interface AddFolderModalProps {
   visible: boolean;
@@ -9,21 +8,21 @@ interface AddFolderModalProps {
   onSubmit: (folderName: string) => void;
   initialName?: string; // С каким текстом открывать инпут
   submitButtonLabel?: string; // Текст на кнопке ("Добавить" или "Переименовать")
+  title?: string; // Заголовок модалки
 }
 
-export default function FolderModal(
-  {
-    visible,
-    onClose,
-    onSubmit,
-    initialName = '',
-    submitButtonLabel = 'Добавить',
-    title = 'Создать папку',
-  }: AddFolderModalProps) {
+export default function FolderModal({
+                                      visible,
+                                      onClose,
+                                      onSubmit,
+                                      initialName = '',
+                                      submitButtonLabel = 'Добавить',
+                                      title = 'Создать папку',
+                                    }: AddFolderModalProps) {
+  const theme = useTheme();
   const [folderName, setFolderName] = useState('');
 
   useEffect(() => {
-    // Когда открываем модалку заново, сбрасываем стейт на initialName
     if (visible) {
       setFolderName(initialName as string);
     }
@@ -46,30 +45,41 @@ export default function FolderModal(
 
   return (
     <Modal visible={visible} transparent animationType="slide">
-      {/* При клике вне области модалки — скрываем клавиатуру */}
       <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
         <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{title}</Text>
+          <Surface style={[styles.modalContent, { backgroundColor: theme.colors.background }]}>
+            <Text style={[styles.modalTitle, { color: theme.colors.onSurface }]}>{title}</Text>
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                {
+                  borderColor: theme.colors.outline,
+                  color: theme.colors.onSurface,
+                  backgroundColor: theme.colors.background
+                },
+              ]}
               maxLength={80}
               placeholder="Название папки"
               value={folderName}
               onChangeText={setFolderName}
+              placeholderTextColor={theme.colors.outline}
             />
-            <Text style={styles.charCounter}>
+            <Text style={[styles.charCounter, { color: theme.colors.onSurfaceVariant }]}>
               {folderName.length}/80
             </Text>
             <View style={styles.buttonWrapper}>
               <View style={styles.buttonSpacing}>
-                <Button title={submitButtonLabel as string} onPress={handleSubmit}/>
+                <Button mode="contained" onPress={handleSubmit} buttonColor={theme.colors.primary}>
+                  {submitButtonLabel}
+                </Button>
               </View>
               <View style={styles.buttonSpacing}>
-                <Button title="Отмена" onPress={handleCancel}/>
+                <Button mode="outlined" onPress={handleCancel} textColor={theme.colors.primary}>
+                  Отмена
+                </Button>
               </View>
             </View>
-          </View>
+          </Surface>
         </View>
       </TouchableWithoutFeedback>
     </Modal>
@@ -85,16 +95,15 @@ const styles = StyleSheet.create({
   modalContent: {
     margin: 16,
     padding: 16,
-    backgroundColor: 'white',
     borderRadius: 8,
   },
   modalTitle: {
     fontSize: 20,
     marginBottom: 12,
+    fontWeight: 'bold',
   },
   input: {
     borderWidth: 1,
-    borderColor: 'gray',
     borderRadius: 8,
     padding: 8,
     marginBottom: 8,
@@ -103,7 +112,6 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     marginBottom: 32,
     fontSize: 12,
-    color: 'gray',
   },
   buttonWrapper: {
     flexDirection: 'row',

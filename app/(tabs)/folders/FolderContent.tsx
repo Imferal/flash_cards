@@ -1,20 +1,9 @@
 // app/(tabs)/folders/FolderContent.tsx
 
 import React, { useContext, useEffect, useState } from 'react';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Link, useRouter } from 'expo-router';
+import { FlatList, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
 import { CollectionsContext } from '@/contexts/CollectionsContext';
-import {
-  addCollection,
-  addFolder,
-  deleteCollection,
-  deleteFolder,
-  getFolderById,
-  getFoldersByParentId,
-  moveCollection, moveFolder,
-  renameCollection,
-  renameFolder,
-} from '@/data/database';
 import { Collection, Folder } from '@/data/types';
 import { MaterialIcons } from '@expo/vector-icons';
 import MoveCollectionModal from '@/components/MoveCollectionModal';
@@ -24,6 +13,16 @@ import FolderItem from '@/components/FolderItem';
 import CollectionItem from '@/components/CollectionItem';
 import MoveFolderModal from '@/components/MoveFolderModal';
 import { FAB, Surface, useTheme } from 'react-native-paper';
+import {
+  addFolder,
+  deleteFolder,
+  getFolderById,
+  getFoldersByParentId,
+  moveFolder,
+  renameFolder,
+} from '@/data/folders.db.ts';
+import { addCollection, deleteCollection, moveCollection, renameCollection } from '@/data/collections.db.ts';
+import BreadCrumbs from '@/components/BreadCrumbs';
 
 interface Props {
   folderId: string | null;
@@ -138,11 +137,6 @@ export default function FolderContent({ folderId }: Props) {
     toggleCollection(collectionId);
   };
 
-  // Хлебные крошки: нажатие
-  const handleBreadcrumbPress = (id: string | null) => {
-    router.push(`/folders/${id ?? ''}`);
-  };
-
   // Перенести папку: нажатие
   const onMoveFolderPress = (folderId: string) => {
     setMoveFolderModalVisible(true);
@@ -157,6 +151,10 @@ export default function FolderContent({ folderId }: Props) {
 
   const onEditCollectionPress = (collectionId: string) => {
     console.log('Нажата кнопка редактирования коллекции с Id: ', collectionId)
+    router.push({
+      pathname: `/collections/${collectionId}/CardsScreen`,
+      params: { folderId },
+    });
   }
 
   const onRenameFolderPress = (folder: Folder) => {
@@ -206,26 +204,12 @@ export default function FolderContent({ folderId }: Props) {
   return (
     <Surface style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* Хлебные крошки */}
-      <Surface style={styles.breadcrumbContainer} elevation={0}>
-        <TouchableOpacity onPress={() => handleBreadcrumbPress(null)}>
-          <MaterialIcons name="home" size={28} color={theme.colors.onSurface} style={styles.icon}/>
-        </TouchableOpacity>
-
-        {breadcrumbs.map((folder, index) => (
-          <Surface key={folder.id} style={styles.breadcrumbWrapper} elevation={0}>
-            <Text style={[styles.breadcrumbSeparator, { color: theme.colors.onSurface }]}>
-              {' / '}
-            </Text>
-            {index === breadcrumbs.length - 1 ? (
-              <Text style={[styles.breadcrumbCurrent, { color: theme.colors.text }]}>{folder.name}</Text>
-            ) : (
-              <Link href={`/folders/${folder.id}`} style={[styles.breadcrumbItem, { color: theme.colors.text }]}>
-                {folder.name}
-              </Link>
-            )}
-          </Surface>
-        ))}
-      </Surface>
+      <BreadCrumbs
+        crumbs={breadcrumbs.map((folder) => ({
+          id: folder.id,
+          name: folder.name,
+        }))}
+      />
 
       <FlatList
         data={[...folders, ...folderCollections]}
