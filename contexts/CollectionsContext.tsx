@@ -3,7 +3,7 @@
 import React, { createContext, useEffect, useState } from 'react';
 import { initDatabase } from '@/data/database';
 import { Text } from 'react-native';
-import { getCollections, toggleCollectionSelection } from '@/data/collections.db.ts';
+import { getCollections, setCollectionSelected } from '@/data/collections.db.ts';
 
 interface Collection {
   id: string;
@@ -15,7 +15,7 @@ interface Collection {
 
 interface CollectionsContextType {
   collections: Collection[];
-  toggleCollection: (id: string) => void;
+  toggleCollection: (id: string, newValue: boolean) => void;
   reloadCollections: () => Promise<void>;
 }
 
@@ -45,15 +45,22 @@ export const CollectionsProvider = ({ children }) => {
   }, []);
 
   // Метод для переключения selected
-  const toggleCollection = async (id: string) => {
-    const collection = collections.find((col) => col.id === id);
-    if (collection) {
-      await toggleCollectionSelection(id, collection.selected);
-      // После переключения — перезагружаем весь список
-      const updatedCollections = await getCollections();
-      setCollections(updatedCollections);
+  const toggleCollection = async (id: string, newSelectedValue: boolean) => {
+    // Локально меняем в стейте, что эта коллекция теперь selected = newSelectedValue
+    setCollections(prev => prev.map(col =>
+      col.id === id
+        ? { ...col, selected: newSelectedValue }
+        : col
+    ));
+
+    try {
+      await setCollectionSelected(id, newSelectedValue);
+      console.log('Коллекция обновлена');
+    } catch (error) {
+      console.error('Ошибка при обновлении коллекции', error);
     }
   };
+
 
   // Принудительно перезагружает весь список "collections"
   const reloadCollections = async () => {

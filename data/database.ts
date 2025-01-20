@@ -7,9 +7,6 @@ import foldersData from './folders.json';
 import englishVerbsCollection from './collections/english_irregular_verbs.json';
 import kazakhWordsCollection from './collections/kazakh_common_words.json';
 import { Collection, Folder } from '@/data/types';
-import { addFolderWithId } from '@/data/folders.db.ts';
-import { addCollectionWithId } from '@/data/collections.db.ts';
-import { addCard } from '@/data/cards.db.ts';
 import uuid from 'react-native-uuid';
 
 const foldersDataTyped: Folder[] = foldersData as Folder[];
@@ -93,17 +90,17 @@ export const resetAppState = async () => {
   try {
     console.log('Начинается сброс состояния приложения...');
 
-    // 1. Удаляем существующие таблицы:
+    // Удаляем существующие таблицы:
     await db.execAsync(`
       DROP TABLE IF EXISTS folders;
       DROP TABLE IF EXISTS collections;
       DROP TABLE IF EXISTS cards;
     `);
 
-    // 2. Удаляем флаг загрузки данных
+    // Удаляем флаг загрузки данных
     await AsyncStorage.removeItem('dataLoaded');
 
-    // 3. Заново инициализируем БД (пересоздаём таблицы и вставляем папки/коллекции/карточки)
+    // Заново инициализируем БД (пересоздаём таблицы и вставляем папки/коллекции/карточки)
     await initDatabase();
 
     console.log('Состояние приложения успешно сброшено.');

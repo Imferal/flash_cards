@@ -23,6 +23,7 @@ import {
 } from '@/data/folders.db.ts';
 import { addCollection, deleteCollection, moveCollection, renameCollection } from '@/data/collections.db.ts';
 import BreadCrumbs from '@/components/BreadCrumbs';
+import ConfirmationModal from '@/components/ConfirmationModal';
 
 interface Props {
   folderId: string | null;
@@ -37,6 +38,13 @@ export default function FolderContent({ folderId }: Props) {
   const [breadcrumbs, setBreadcrumbs] = useState<Folder[]>([]);
   const [addFolderModalVisible, setAddFolderModalVisible] = useState(false);
   const [addCollectionModalVisible, setAddCollectionModalVisible] = useState(false);
+
+  // Для удаления папки:
+  const [confirmDeleteModalVisible, setConfirmDeleteModalVisible] = useState(false);
+  const [folderToDelete, setFolderToDelete] = useState<string | null>(null);
+
+  // Для удаления коллекции:
+  const [collectionToDelete, setCollectionToDelete] = useState<string | null>(null);
 
   // Локальные стейты для “Переименовать папку”
   const [renameFolderModalVisible, setRenameFolderModalVisible] = useState(false);
@@ -97,7 +105,7 @@ export default function FolderContent({ folderId }: Props) {
 
   // Добавляет новую коллекцию
   const handleAddCollection = async (collectionName: string) => {
-    const newCollectionId = await addCollection(collectionName, folderId, 1, 1);
+    const newCollectionId = await addCollection(collectionName, folderId, 1, true);
     if (newCollectionId) {
       await reloadCollections(); // обновляем списки
     }
@@ -115,26 +123,14 @@ export default function FolderContent({ folderId }: Props) {
     await reloadCollections();
   };
 
-  // Удаляет папку
-  const handleDeleteFolder = async (folderId: string) => {
-    await deleteFolder(folderId);
-    await loadFolders();
-  };
-
-  // Удаляет коллекцию
-  const handleDeleteCollection = async (collectionId: string) => {
-    await deleteCollection(collectionId);
-    await reloadCollections();
-  };
-
   // Переход в папку
   const handleFolderPress = (id: string) => {
     router.push(`/folders/${id}`);
   };
 
   // Переключение коллекции
-  const handleToggleCollection = (collectionId: string) => {
-    toggleCollection(collectionId);
+  const handleToggleCollection = (collectionId: string, newValue: boolean) => {
+    toggleCollection(collectionId, newValue);
   };
 
   // Перенести папку: нажатие
@@ -201,6 +197,42 @@ export default function FolderContent({ folderId }: Props) {
     setCollectionToMove(null);
   };
 
+
+  // Нажато "Удалить" на папке
+  const onDeleteFolderPress = (id: string) => {
+    setFolderToDelete(id);
+    setCollectionToDelete(null);
+    setConfirmDeleteModalVisible(true);
+  };
+
+  // Нажато "Удалить" на коллекции
+  const onDeleteCollectionPress = (id: string) => {
+    setCollectionToDelete(id);
+    setFolderToDelete(null);
+    setConfirmDeleteModalVisible(true);
+  };
+
+  // Пользователь подтвердил удаление
+  const handleConfirmDelete = async () => {
+    if (folderToDelete) {
+      await deleteFolder(folderToDelete);
+      await loadFolders();
+      setFolderToDelete(null);
+    } else if (collectionToDelete) {
+      await deleteCollection(collectionToDelete);
+      await reloadCollections();
+      setCollectionToDelete(null);
+    }
+    setConfirmDeleteModalVisible(false);
+  };
+
+  // Пользователь отменил удаление
+  const handleCancelDelete = () => {
+    setFolderToDelete(null);
+    setCollectionToDelete(null);
+    setConfirmDeleteModalVisible(false);
+  };
+
   return (
     <Surface style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* Хлебные крошки */}
@@ -223,7 +255,7 @@ export default function FolderContent({ folderId }: Props) {
                 folder={folderItem}
                 onPress={handleFolderPress}
                 onRename={onRenameFolderPress}
-                onDelete={handleDeleteFolder}
+                onDelete={(folderId) => onDeleteFolderPress(folderId)}
                 onMove={onMoveFolderPress}
               />
             );
@@ -235,7 +267,7 @@ export default function FolderContent({ folderId }: Props) {
                 collection={coll}
                 onToggleSelect={handleToggleCollection}
                 onRename={onRenameCollectionPress}
-                onDelete={handleDeleteCollection}
+                onDelete={(collectionId) => onDeleteCollectionPress(collectionId)}
                 onMove={onMoveCollectionPress}
                 onEdit={onEditCollectionPress}
               />
@@ -316,6 +348,17 @@ export default function FolderContent({ folderId }: Props) {
         collectionId={collectionToMove}
         onClose={() => setMoveCollectionModalVisible(false)}
         onConfirm={handleConfirmCollectionMove}
+      />
+
+      {/*Подтверждение удаления*/}
+      <ConfirmationModal
+        visible={confirmDeleteModalVisible}
+        title="Подтвердите удаление"
+        message="Это действие нельзя отменить."
+        confirmLabel="Удалить"
+        cancelLabel="Отмена"
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
       />
     </Surface>
   );

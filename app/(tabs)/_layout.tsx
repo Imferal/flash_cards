@@ -24,9 +24,9 @@ export default function TabLayout() {
         },
         tabBarStyle: {
           backgroundColor: theme.colors.surface, // Задний фон вкладки
-          borderTopColor: theme.colors.primary, // Цвет верхней границы табов
+          borderTopColor: theme.colors.onSurfaceVariant, // Цвет верхней границы табов
         },
-        tabBarActiveTintColor: theme.colors.primary, // Цвет активного таба
+        tabBarActiveTintColor: theme.colors.onSurfaceVariant, // Цвет активного таба
         tabBarInactiveTintColor: theme.colors.onSurfaceVariant, // Цвет неактивного таба
         tabBarLabelStyle: {
           fontSize: 12,

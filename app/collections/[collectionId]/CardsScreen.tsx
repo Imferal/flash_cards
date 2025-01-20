@@ -3,26 +3,28 @@
 import { FAB, Searchbar, Surface, useTheme } from 'react-native-paper';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { deleteCard, getCardsByCollection } from '@/data/cards.db.ts';
+import { addCard, deleteCard, getCardsByCollection, updateCard } from '@/data/cards.db.ts';
 import { FlatList, StyleSheet } from 'react-native';
-// import CardModal from '@/components/CardModal';
 import CardItem from '@/components/CardItem';
 import BreadCrumbs from '@/components/BreadCrumbs';
 import { Folder } from '@/data/types.ts';
 import { getFolderById } from '@/data/folders.db.ts';
 import { MaterialIcons } from '@expo/vector-icons';
+import CardModal from '@/components/CardModal';
+import type {Card as CardType} from '@/data/types';
 
 
 export default function CardsScreen() {
   const theme = useTheme();
-  const router = useRouter();
   const { collectionId, folderId } = useLocalSearchParams<{ collectionId: string; folderId: string | null }>();
 
   const [cards, setCards] = useState<any[]>([]);
   const [searchText, setSearchText] = useState('');
   const [breadcrumbs, setBreadcrumbs] = useState<Folder[]>([]);
+  const [existingCard, setExiscitngCard] = useState<CardType>(null);
 
-  // const [addModalVisible, setAddModalVisible] = useState(false);
+  const [AddCardModalVisible, setAddCardModalVisible] = useState(false);
+  const [UpdateCardModalVisible, setUpdateCardModalVisible] = useState(false);
 
   // Загружаем карточки
   useEffect(() => {
@@ -56,16 +58,9 @@ export default function CardsScreen() {
     );
   });
 
-  const handleCardPress = (cardId: string) => {
-    console.log('Clicked on card: ', cardId);
-  };
-
-  const onCardClose = () => {
-    console.log('Карточка закрыта');
-  };
-
-  const onCardEdit = () => {
-    console.log('Карточка изменена');
+  const handleCardPress = (item: CardType) => {
+    setExiscitngCard(item);
+    setUpdateCardModalVisible(true);
   };
 
   const onCardDelete = async (cardId: string) => {
@@ -78,6 +73,16 @@ export default function CardsScreen() {
     const updatedCards = await getCardsByCollection(collectionId);
     setCards(updatedCards);
   };
+
+  const onAddCard = async (front, back, collectionId) => {
+    addCard(front, back, collectionId);
+    refreshCards();
+  }
+
+  const onUpdateCard = async (front, back, collectionId) => {
+    updateCard(front, back, collectionId);
+    refreshCards();
+  }
 
   return (
     <Surface style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -106,7 +111,7 @@ export default function CardsScreen() {
           return (
             <CardItem
               card={item}
-              onPress={handleCardPress}
+              onPress={() => handleCardPress(item)}
               onDelete={onCardDelete}
             />
           );
@@ -120,23 +125,31 @@ export default function CardsScreen() {
         icon={(props) => (
           <MaterialIcons name="add" size={props.size} color={theme.colors.background} />
         )}
-        onPress={() => {
-          console.log('Add card pressed');
-          // setAddModalVisible(true);
+        onPress={() => setAddCardModalVisible(true)}
+      />
+
+      <CardModal
+        visible={AddCardModalVisible}
+        onClose={() => setAddCardModalVisible(false)}
+        title="Создать карточку"
+        submitButtonLabel="Создать"
+        onSubmit={(front, back) => {
+         onAddCard(front, back, collectionId);
         }}
       />
 
-      {/* Пример (закомментировано), если у вас уже есть CardModal */}
-      {/*
       <CardModal
-         visible={addModalVisible}
-         onClose={() => setAddModalVisible(false)}
-         onSubmit={(front, back) => {
-           // Здесь вы вызываете addCard(front, back, collectionId)
-           // И обновляете setCards([...cards, { ... }])
-         }}
+        visible={UpdateCardModalVisible}
+        onClose={() => setUpdateCardModalVisible(false)}
+        title="Изменить карточку"
+        submitButtonLabel="Изменить"
+        initialFront={existingCard?.frontText ?? ''}
+        initialBack={existingCard?.backText ?? ''}
+        onSubmit={(front, back) => {
+          onUpdateCard(existingCard.id, front, back);
+        }}
       />
-      */}
+
     </Surface>
   );
 }

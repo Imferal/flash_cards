@@ -18,6 +18,6 @@ export interface Collection {
   name: string;
   folderId: string | null;
   createdByUser: number;
-  selected: number;
+  selected: boolean;
   cards: Card[];
 }

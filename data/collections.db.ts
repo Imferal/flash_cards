@@ -1,18 +1,17 @@
 // data/collections.db.ts
 
-import { db } from './database'; // <-- предполагаем, что database.ts экспортирует db
+import { db } from './database';
 import uuid from 'react-native-uuid';
-import { Collection, Folder } from '@/data/types';
+import { Collection } from '@/data/types';
 
 /** Функция для добавления новой коллекции */
 export const addCollection = async (
   name: string,
   folderId: string | null = null,
   createdByUser: number = 1,
-  selected: number = 0): Promise<string | null> => {
-
+  selected: boolean = false
+): Promise<string | null> => {
   const id = uuid.v4() as string;
-
   try {
     await db.runAsync(
       'INSERT INTO collections (id, name, folderId, createdByUser, selected) VALUES (?, ?, ?, ?, ?);',
@@ -20,7 +19,7 @@ export const addCollection = async (
       name,
       folderId,
       createdByUser,
-      selected
+      selected ? 1 : 0
     );
     console.log('Коллекция добавлена, id: ', id);
     return id;
@@ -42,20 +41,17 @@ export const addCollectionWithId = async (id: string, name: string, folderId: st
   }
 };
 
-export const getCollections = async () => {
+export const getCollections = async (): Promise<Collection[]> => {
   try {
-    return await db.getAllAsync('SELECT * FROM collections;');
+    const rows = await db.getAllAsync('SELECT * FROM collections;');
+    // Преобразуем каждую строку: selected=1 => true, selected=0 => false
+    console.log(rows)
+    return rows.map((row: any) => ({
+      ...row,
+      selected: row.selected === 1,
+    }));
   } catch (error) {
     console.error('Error getting collections:', error);
-    return [];
-  }
-};
-
-export const getSelectedCollections = async () => {
-  try {
-    return await db.getAllAsync('SELECT * FROM collections WHERE selected = 1;');
-  } catch (error) {
-    console.error('Error getting selected collections:', error);
     return [];
   }
 };
@@ -74,19 +70,6 @@ export const renameCollection = async (id: string, newName: string): Promise<voi
   }
 };
 
-/** Функция для получения коллекций по folderId */
-export const getCollectionsByFolderId = async (folderId: string | null): Promise<Collection[]> => {
-  try {
-    return await db.getAllAsync(
-      'SELECT * FROM collections WHERE folderId IS ?;',
-      folderId
-    );
-  } catch (error) {
-    console.error('Ошибка при получении коллекций по папке:', error);
-    return [];
-  }
-};
-
 export const moveCollection = async (collectionId: string, newFolderId: string | null) => {
   try {
     await db.runAsync('UPDATE collections SET folderId = ? WHERE id = ?;', newFolderId, collectionId);
@@ -96,11 +79,16 @@ export const moveCollection = async (collectionId: string, newFolderId: string |
   }
 }
 
-export const toggleCollectionSelection = async (collectionId: string, selected: boolean) => {
+export const setCollectionSelected = async (
+  collectionId: string,
+  newValue: boolean
+) => {
+  console.log(newValue)
   try {
     await db.runAsync(
       'UPDATE collections SET selected = ? WHERE id = ?;',
-      selected ? 0 : 1, collectionId
+      newValue ? 1 : 0,
+      collectionId
     );
     console.log('Collection selection status updated');
   } catch (error) {

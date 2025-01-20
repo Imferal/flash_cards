@@ -18,7 +18,7 @@ export default function StudyScreen() {
   useEffect(() => {
     const loadCards = async () => {
       // Получаем выбранные коллекции
-      const selectedCollections = collections.filter((col) => col.selected === 1);
+      const selectedCollections = collections.filter((col) => col.selected);
 
       let allCards: any[] = [];
       for (const collection of selectedCollections) {
@@ -71,9 +71,9 @@ export default function StudyScreen() {
             isAnimating={isAnimating}
             onAnimationEnd={handleAnimationEnd}
             themeColors={{
-              frontBackground: theme.colors.primaryContainer,
-              backBackground: theme.colors.secondaryContainer,
-              textColor: theme.colors.onSurface,
+              frontBackground: theme.colors.surface,
+              backBackground: theme.colors.surface,
+              textColor: theme.colors.accent,
             }}
           />
         )}

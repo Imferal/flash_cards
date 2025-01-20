@@ -107,22 +107,22 @@ export default function Card(
 const styles = StyleSheet.create({
   container: {
     width: 300,
-    height: 200,
+    minHeight: 200,
     alignItems: 'center',
     justifyContent: 'center',
   },
   card: {
     width: 300,
-    height: 200,
+    minHeight: 200,
     position: 'absolute',
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 10,
+    padding: 1,
     backfaceVisibility: 'hidden',
   },
   cardText: {
     fontSize: 24,
     fontWeight: 'bold',
-    textAlign: 'center',
   },
 });

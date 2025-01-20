@@ -4,10 +4,7 @@ import { Stack } from 'expo-router';
 import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { CollectionsProvider } from '@/contexts/CollectionsContext';
 import { PaperProvider } from 'react-native-paper';
-import {
-  autumnGlowTheme,
-  cozySunsetTheme, honeyCinnamonTheme, warmCocoaTheme,
-} from '@/theme';
+import { honeyCinnamonTheme } from '@/theme';
 
 export default function RootLayout() {
   return (
