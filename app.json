@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "MemoryCards",
-    "slug": "MemoryCards",
+    "name": "FlashCards",
+    "slug": "FlashCards",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -19,7 +19,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.imferal.FlashCards"
     },
     "web": {
       "bundler": "metro",
@@ -31,6 +32,14 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "a5648e81-5fdc-428f-a783-4a1a338e0b1f"
+      }
     }
   }
 }
