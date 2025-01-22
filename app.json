@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "FlashCards",
-    "slug": "FlashCards",
+    "slug": "flashcards",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -13,7 +13,8 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.imferal.FlashCards"
     },
     "android": {
       "adaptiveIcon": {
@@ -33,12 +34,13 @@
     "experiments": {
       "typedRoutes": true
     },
+    "newArchEnabled": true,
     "extra": {
       "router": {
         "origin": false
       },
       "eas": {
-        "projectId": "a5648e81-5fdc-428f-a783-4a1a338e0b1f"
+        "projectId": "7c9b0eb9-46d2-4892-8f28-2a1d62bdc406"
       }
     }
   }
